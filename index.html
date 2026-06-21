@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Revise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --surface2: #f4f3f0;
+      --border: rgba(0,0,0,0.09);
+      --border-md: rgba(0,0,0,0.16);
+      --text: #1a1a18;
+      --text2: #6b6b67;
+      --text3: #a0a09a;
+      --purple: #534AB7;
+      --purple-light: #EEEDFE;
+      --purple-text: #3C3489;
+      --green: #3B6D11;
+      --green-light: #EAF3DE;
+      --blue: #185FA5;
+      --blue-light: #E6F1FB;
+      --amber: #854F0B;
+      --amber-light: #FAEEDA;
+      --red: #A32D2D;
+      --red-light: #FCEBEB;
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #131312;
+        --surface: #1e1e1c;
+        --surface2: #272725;
+        --border: rgba(255,255,255,0.08);
+        --border-md: rgba(255,255,255,0.15);
+        --text: #f0efe9;
+        --text2: #9a9a94;
+        --text3: #606059;
+        --purple: #AFA9EC;
+        --purple-light: #26215C;
+        --purple-text: #CECBF6;
+        --green: #97C459;
+        --green-light: #173404;
+        --blue: #85B7EB;
+        --blue-light: #042C53;
+        --amber: #EF9F27;
+        --amber-light: #412402;
+        --red: #F09595;
+        --red-light: #501313;
+      }
+    }
+
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Layout */
+    .shell { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0;
+    }
+    .nav-inner {
+      max-width: 860px; margin: 0 auto; padding: 0 24px;
+      height: 56px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
+    .logo em { color: var(--purple); font-style: normal; }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .btn { border: 0.5px solid var(--border-md); background: none; border-radius: var(--radius); padding: 7px 14px; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--text2); display: inline-flex; align-items: center; gap: 6px; transition: background 0.12s, color 0.12s; }
+    .btn:hover { background: var(--surface2); color: var(--text); }
+    .btn-primary { background: var(--purple); color: #fff; border-color: transparent; font-weight: 500; }
+    .btn-primary:hover { opacity: 0.88; background: var(--purple); color: #fff; }
+
+    /* Page sections */
+    .page { padding: 2rem 0 4rem; }
+    .page-hidden { display: none !important; }
+
+    /* Headings */
+    h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; color: var(--text); }
+    h2 { font-size: 18px; font-weight: 500; color: var(--text); }
+    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface2); border-radius: var(--radius); padding: 14px 16px; }
+    .stat-val { font-size: 24px; font-weight: 600; color: var(--text); }
+    .stat-lbl { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+    /* Subject cards */
+    .subjects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 2.5rem; }
+    .subject-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; cursor: pointer;
+      transition: border-color 0.15s, transform 0.12s;
+      position: relative; overflow: hidden;
+    }
+    .subject-card:hover { border-color: var(--border-md); transform: translateY(-1px); }
+    .subject-card.active-card { border: 1.5px solid var(--purple); }
+    .subject-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 19px; }
+    .subject-name { font-size: 15px; font-weight: 500; margin-bottom: 3px; }
+    .subject-meta { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
+    .pbar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .pbar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+    .mastery-label { font-size: 11px; color: var(--text3); margin-top: 5px; }
+    .due-badge {
+      position: absolute; top: 12px; right: 12px;
+      font-size: 11px; font-weight: 600;
+      background: var(--purple); color: #fff;
+      border-radius: 20px; padding: 2px 8px;
+    }
+
+    /* Due today list */
+    .due-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+    .due-item:last-child { border-bottom: none; }
+    .due-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .due-info { flex: 1; }
+    .due-name { font-size: 14px; font-weight: 500; }
+    .due-count { font-size: 12px; color: var(--text3); }
+    .streak-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); margin-bottom: 2rem; }
+    .streak-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); }
+
+    /* Flashcard view */
+    #fc-view .back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+    #fc-view .fc-title { font-size: 16px; font-weight: 500; }
+    #fc-view .fc-count { margin-left: auto; font-size: 13px; color: var(--text3); }
+    .progress-track { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 2rem; overflow: hidden; }
+    .progress-track-fill { height: 100%; background: var(--purple); border-radius: 2px; transition: width 0.3s; }
+
+    .flashcard {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); padding: 3rem 2rem;
+      min-height: 220px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      cursor: pointer; position: relative; margin-bottom: 1rem;
+      transition: border-color 0.15s;
+      perspective: 1000px;
+    }
+    .flashcard:hover { border-color: var(--border-md); }
+    .fc-scene { width: 100%; height: 100%; position: relative; }
+    .fc-side { position: absolute; width: 100%; top: 0; left: 0; }
+    .card-side-lbl { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 1rem; }
+    .card-q { font-size: 20px; font-weight: 500; color: var(--text); line-height: 1.45; }
+    .card-a { font-size: 16px; color: var(--text2); line-height: 1.6; }
+    .tap-hint { font-size: 13px; color: var(--text3); margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
+
+    .card-btns { display: flex; gap: 10px; }
+    .card-btns button { flex: 1; padding: 12px; border-radius: var(--radius); font-size: 14px; font-family: inherit; cursor: pointer; border: 0.5px solid var(--border-md); background: none; color: var(--text); font-weight: 500; transition: background 0.12s; display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .btn-wrong { color: var(--red) !important; border-color: var(--red-light) !important; }
+    .btn-wrong:hover { background: var(--red-light) !important; }
+    .btn-skip { color: var(--text3) !important; }
+    .btn-skip:hover { background: var(--surface2) !important; }
+    .btn-right { color: var(--green) !important; border-color: var(--green-light) !important; }
+    .btn-right:hover { background: var(--green-light) !important; }
+    .hidden { display: none !important; }
+
+    /* Complete screen */
+    .complete-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 3rem 2rem; text-align: center; }
+    .complete-icon { font-size: 44px; color: var(--purple); margin-bottom: 1rem; }
+    .complete-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+    .complete-sub { font-size: 15px; color: var(--text2); margin-bottom: 2rem; }
+    .complete-stats { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; }
+    .cs { text-align: center; }
+    .cs-val { font-size: 28px; font-weight: 600; }
+    .cs-lbl { font-size: 12px; color: var(--text3); }
+    .green-val { color: var(--green); }
+    .red-val { color: var(--red); }
+
+    /* Manage page */
+    #manage-view h2 { margin-bottom: 1.5rem; }
+    .subject-section { margin-bottom: 2rem; }
+    .subject-section h3 { font-size: 15px; font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .card-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .card-list-item {
+      background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius);
+      padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px;
+    }
+    .card-list-item .q-text { font-size: 14px; color: var(--text); flex: 1; }
+    .card-list-item .a-text { font-size: 13px; color: var(--text2); flex: 1; }
+    .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; flex-shrink: 0; padding: 2px; }
+    .del-btn:hover { color: var(--red); }
+    .add-card-form { display: flex; flex-direction: column; gap: 8px; }
+    .add-card-form input, .add-card-form textarea {
+      background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius);
+      padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text);
+      outline: none; width: 100%; resize: vertical;
+    }
+    .add-card-form input:focus, .add-card-form textarea:focus { border-color: var(--purple); }
+    .add-card-form .form-row { display: flex; gap: 8px; }
+    .add-card-form .form-row input { flex: 1; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .subjects { grid-template-columns: repeat(2, 1fr); }
+      .complete-stats { gap: 1.5rem; }
+    }
+    @media (max-width: 420px) {
+      .subjects { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">re<em>vise</em></div>
+    <div class="nav-right">
+      <button class="btn" id="manage-btn" onclick="showManage()">
+        <i class="ti ti-cards" aria-hidden="true"></i> Manage cards
+      </button>
+      <button class="btn btn-primary" id="study-all-btn" onclick="studyAll()">
+        <i class="ti ti-player-play" aria-hidden="true"></i> Study all due
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="home-view" class="page shell">
+  <div style="margin-bottom: 1.75rem;">
+    <h1 style="margin-bottom: 6px;">Good evening. <span id="greeting-name"></span></h1>
+    <div class="streak-row">
+      <span class="streak-dot"></span>
+      <span id="streak-text">You're on a 1-day streak. Keep it up.</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Cards total</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-mastery">0%</div><div class="stat-lbl">Avg mastery</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Day streak</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-due">0</div><div class="stat-lbl">Due today</div></div>
+  </div>
+
+  <div class="section-label">Subjects</div>
+  <div class="subjects" id="subjects-grid"></div>
+
+  <div class="section-label">Due today</div>
+  <div id="due-list"></div>
+</div>
+
+<!-- FLASHCARD SESSION -->
+<div id="fc-view" class="page shell page-hidden">
+  <div class="back-row">
+    <button class="btn" onclick="goHome()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back</button>
+    <span class="fc-title" id="fc-title"></span>
+    <span class="fc-count" id="fc-count"></span>
+  </div>
+  <div class="progress-track"><div class="progress-track-fill" id="fc-progress"></div></div>
+
+  <div class="flashcard" id="flashcard" onclick="flipCard()" role="button" aria-label="Flashcard — click to flip">
+    <div>
+      <div class="card-side-lbl" id="card-side-lbl">Question</div>
+      <div class="card-q" id="card-main"></div>
+      <div class="tap-hint" id="tap-hint"><i class="ti ti-hand-click" aria-hidden="true"></i> Tap to reveal answer</div>
+    </div>
+  </div>
+
+  <div class="card-btns hidden" id="card-btns">
+    <button class="btn-wrong" onclick="markCard('wrong')"><i class="ti ti-x" aria-hidden="true"></i> Didn't know</button>
+    <button class="btn-skip" onclick="markCard('skip')"><i class="ti ti-arrow-right" aria-hidden="true"></i> Skip</button>
+    <button class="btn-right" onclick="markCard('right')"><i class="ti ti-check" aria-hidden="true"></i> Got it</button>
+  </div>
+
+  <div class="complete-card hidden" id="complete-card">
+    <div class="complete-icon"><i class="ti ti-confetti" aria-hidden="true"></i></div>
+    <div class="complete-title">Session complete!</div>
+    <div class="complete-sub" id="complete-sub"></div>
+    <div class="complete-stats">
+      <div class="cs"><div class="cs-val green-val" id="cs-right">0</div><div class="cs-lbl">Correct</div></div>
+      <div class="cs"><div class="cs-val red-val" id="cs-wrong">0</div><div class="cs-lbl">Missed</div></div>
+      <div class="cs"><div class="cs-val" id="cs-total">0</div><div class="cs-lbl">Reviewed</div></div>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn" onclick="restartSession()"><i class="ti ti-refresh" aria-hidden="true"></i> Study again</button>
+      <button class="btn btn-primary" onclick="goHome()"><i class="ti ti-home" aria-hidden="true"></i> Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE CARDS -->
+<div id="manage-view" class="page shell page-hidden">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
+    <button class="btn" onclick="goHome()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back</button>
+    <h2 style="margin:0;">Manage cards</h2>
+  </div>
+  <div id="manage-content"></div>
+</div>
+
+<script>
+const SUBJECTS = [
+  {
+    id: 'math',
+    name: 'Mathematics',
+    icon: 'ti-math-function',
+    color: '#EEEDFE',
+    iconColor: '#534AB7',
+    darkColor: '#26215C',
+    darkIconColor: '#AFA9EC',
+  },
+  {
+    id: 'science',
+    name: 'Science',
+    icon: 'ti-flask',
+    color: '#E6F1FB',
+    iconColor: '#185FA5',
+    darkColor: '#042C53',
+    darkIconColor: '#85B7EB',
+  },
+  {
+    id: 'english',
+    name: 'English',
+    icon: 'ti-writing',
+    color: '#FAECE7',
+    iconColor: '#993C1D',
+    darkColor: '#4A1B0C',
+    darkIconColor: '#F0997B',
+  },
+];
+
+const DEFAULT_CARDS = {
+  math: [
+    { q: 'What is the quadratic formula?', a: 'x = (−b ± √(b²−4ac)) / 2a, used to solve ax² + bx + c = 0.' },
+    { q: 'What is the area of a circle?', a: 'A = πr², where r is the radius.' },
+    { q: 'Differentiate sin(x) with respect to x.', a: 'cos(x)' },
+    { q: 'What is the Pythagorean theorem?', a: 'a² + b² = c², where c is the hypotenuse of a right-angled triangle.' },
+    { q: 'What does the gradient of a line represent?', a: 'The rate of change — how steep the line is. Calculated as rise ÷ run, or (y₂−y₁)/(x₂−x₁).' },
+    { q: 'What is the sum of interior angles of a triangle?', a: '180°' },
+    { q: 'Simplify: (x²)(x³)', a: 'x⁵ — when multiplying powers with the same base, add the exponents.' },
+    { q: 'What is the mean of a data set?', a: 'The mean is the sum of all values divided by the number of values.' },
+  ],
+  science: [
+    { q: 'What is the powerhouse of the cell?', a: 'The mitochondria — responsible for producing ATP through cellular respiration.' },
+    { q: 'Define osmosis.', a: 'The movement of water molecules through a semi-permeable membrane from high to low water potential.' },
+    { q: 'What is Newton\'s second law?', a: 'F = ma — force equals mass times acceleration.' },
+    { q: 'What is the chemical symbol for water?', a: 'H₂O — two hydrogen atoms bonded to one oxygen atom.' },
+    { q: 'What is the speed of light in a vacuum?', a: 'Approximately 3 × 10⁸ metres per second (299,792,458 m/s).' },
+    { q: 'What is photosynthesis?', a: 'The process by which plants use sunlight, water and CO₂ to produce glucose and oxygen. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
+    { q: 'What is the atomic number of carbon?', a: '6 — carbon has 6 protons in its nucleus.' },
+    { q: 'Define a covalent bond.', a: 'A chemical bond formed by the sharing of electron pairs between two atoms.' },
+    { q: 'What is the law of conservation of mass?', a: 'Matter cannot be created or destroyed in a chemical reaction — the total mass of reactants equals the total mass of products.' },
+  ],
+  english: [
+    { q: 'What is a metaphor?', a: 'A figure of speech that describes something by saying it is something else. E.g. "Time is a thief."' },
+    { q: 'What is a simile?', a: 'A comparison using "like" or "as". E.g. "She was as fast as lightning."' },
+    { q: 'Define alliteration.', a: 'The repetition of the same consonant sound at the start of closely connected words. E.g. "Peter Piper picked a peck."' },
+    { q: 'What is an oxymoron?', a: 'A figure of speech that combines two contradictory terms. E.g. "deafening silence", "bittersweet".' },
+    { q: 'What is foreshadowing?', a: 'A literary device where the author gives hints or clues about what will happen later in the story.' },
+    { q: 'Define the word "protagonist".', a: 'The main character of a story — the one the narrative centres around.' },
+    { q: 'What is dramatic irony?', a: 'When the audience knows something that the characters in the story do not.' },
+    { q: 'Define "theme" in literature.', a: 'The central idea or message the author is exploring throughout the text — e.g. power, identity, loss.' },
+  ],
+};
+
+function isDark() {
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem('revise_data') || 'null') || initData();
+  } catch { return initData(); }
+}
+
+function initData() {
+  const d = { cards: {}, mastery: {}, streak: 1, lastStudied: new Date().toDateString() };
+  SUBJECTS.forEach(s => {
+    d.cards[s.id] = DEFAULT_CARDS[s.id].map((c, i) => ({ ...c, id: i, due: true }));
+    d.mastery[s.id] = 0;
+  });
+  return d;
+}
+
+function saveData(d) {
+  localStorage.setItem('revise_data', JSON.stringify(d));
+}
+
+let data = loadData();
+let session = { cards: [], idx: 0, right: 0, wrong: 0, subjectId: null };
+
+function allCards() {
+  return SUBJECTS.flatMap(s => (data.cards[s.id] || []).map(c => ({ ...c, subjectId: s.id })));
+}
+
+function dueCards(subjectId) {
+  const cards = subjectId ? data.cards[subjectId] : allCards();
+  return (cards || []).filter(c => c.due !== false);
+}
+
+function computeMastery(subjectId) {
+  const cards = data.cards[subjectId] || [];
+  if (!cards.length) return 0;
+  const known = cards.filter(c => c.due === false).length;
+  return Math.round((known / cards.length) * 100);
+}
+
+function updateStats() {
+  const total = SUBJECTS.reduce((n, s) => n + (data.cards[s.id] || []).length, 0);
+  const masteries = SUBJECTS.map(s => computeMastery(s.id));
+  const avgMastery = masteries.length ? Math.round(masteries.reduce((a, b) => a + b, 0) / masteries.length) : 0;
+  const due = SUBJECTS.reduce((n, s) => n + dueCards(s.id).length, 0);
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-mastery').textContent = avgMastery + '%';
+  document.getElementById('s-streak').textContent = data.streak || 1;
+  document.getElementById('s-due').textContent = due;
+}
+
+function renderHome() {
+  updateStats();
+
+  const dark = isDark();
+  const grid = document.getElementById('subjects-grid');
+  grid.innerHTML = SUBJECTS.map(s => {
+    const due = dueCards(s.id).length;
+    const mastery = computeMastery(s.id);
+    const iconBg = dark ? s.darkColor : s.color;
+    const iconCol = dark ? s.darkIconColor : s.iconColor;
+    return `
+      <div class="subject-card" onclick="startSubject('${s.id}')">
+        ${due > 0 ? `<div class="due-badge">${due} due</div>` : ''}
+        <div class="subject-icon" style="background:${iconBg}">
+          <i class="ti ${s.icon}" style="color:${iconCol}" aria-hidden="true"></i>
+        </div>
+        <div class="subject-name">${s.name}</div>
+        <div class="subject-meta">${(data.cards[s.id]||[]).length} cards</div>
+        <div class="pbar"><div class="pbar-fill" style="width:${mastery}%; background:${iconCol}"></div></div>
+        <div class="mastery-label">${mastery}% mastered</div>
+      </div>
+    `;
+  }).join('');
+
+  const dueSubjects = SUBJECTS.filter(s => dueCards(s.id).length > 0);
+  const dueList = document.getElementById('due-list');
+  if (!dueSubjects.length) {
+    dueList.innerHTML = `<p style="font-size:14px; color:var(--text3); padding:1rem 0;">All caught up — nothing due today!</p>`;
+    return;
+  }
+  dueList.innerHTML = dueSubjects.map(s => {
+    const due = dueCards(s.id).length;
+    const iconBg = dark ? s.darkColor : s.color;
+    const iconCol = dark ? s.darkIconColor : s.iconColor;
+    return `
+      <div class="due-item">
+        <div class="due-icon" style="background:${iconBg}">
+          <i class="ti ${s.icon}" style="color:${iconCol}" aria-hidden="true"></i>
+        </div>
+        <div class="due-info">
+          <div class="due-name">${s.name}</div>
+          <div class="due-count">${due} card${due !== 1 ? 's' : ''} to review</div>
+        </div>
+        <button class="btn" onclick="startSubject('${s.id}')">
+          Start <i class="ti ti-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function show(id) {
+  ['home-view','fc-view','manage-view'].forEach(v => {
+    document.getElementById(v).classList.toggle('page-hidden', v !== id);
+  });
+}
+
+function goHome() {
+  renderHome();
+  show('home-view');
+}
+
+function startSubject(subjectId) {
+  const cards = dueCards(subjectId);
+  if (!cards.length) { alert('No cards due for this subject!'); return; }
+  beginSession(cards, subjectId);
+}
+
+function studyAll() {
+  const cards = SUBJECTS.flatMap(s => dueCards(s.id).map(c => ({ ...c, subjectId: s.id })));
+  if (!cards.length) { alert('Nothing due — you\'re all caught up!'); return; }
+  beginSession(cards, null);
+}
+
+function beginSession(cards, subjectId) {
+  session = { cards: shuffle([...cards]), idx: 0, right: 0, wrong: 0, subjectId };
+  const subject = SUBJECTS.find(s => s.id === subjectId);
+  document.getElementById('fc-title').textContent = subject ? subject.name : 'All subjects';
+  document.getElementById('complete-card').classList.add('hidden');
+  document.getElementById('flashcard').classList.remove('hidden');
+  document.getElementById('card-btns').classList.add('hidden');
+  show('fc-view');
+  showCard();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+let flipped = false;
+
+function showCard() {
+  flipped = false;
+  const card = session.cards[session.idx];
+  const pct = Math.round((session.idx / session.cards.length) * 100);
+  document.getElementById('fc-progress').style.width = pct + '%';
+  document.getElementById('fc-count').textContent = `${session.idx + 1} / ${session.cards.length}`;
+  document.getElementById('card-side-lbl').textContent = 'Question';
+  document.getElementById('card-main').textContent = card.q;
+  document.getElementById('tap-hint').classList.remove('hidden');
+  document.getElementById('card-btns').classList.add('hidden');
+  document.getElementById('flashcard').style.cursor = 'pointer';
+}
+
+function flipCard() {
+  if (flipped) return;
+  flipped = true;
+  const card = session.cards[session.idx];
+  document.getElementById('card-side-lbl').textContent = 'Answer';
+  document.getElementById('card-main').textContent = card.a;
+  document.getElementById('tap-hint').classList.add('hidden');
+  document.getElementById('card-btns').classList.remove('hidden');
+  document.getElementById('flashcard').style.cursor = 'default';
+}
+
+function markCard(result) {
+  const card = session.cards[session.idx];
+  if (result === 'right') {
+    session.right++;
+    const sid = card.subjectId || session.subjectId;
+    const subjectCards = data.cards[sid];
+    const idx = subjectCards.findIndex(c => c.id === card.id);
+    if (idx !== -1) subjectCards[idx].due = false;
+  } else if (result === 'wrong') {
+    session.wrong++;
+  }
+
+  session.idx++;
+  if (session.idx >= session.cards.length) {
+    endSession();
+  } else {
+    showCard();
+  }
+  saveData(data);
+}
+
+function endSession() {
+  document.getElementById('flashcard').classList.add('hidden');
+  document.getElementById('card-btns').classList.add('hidden');
+  document.getElementById('fc-progress').style.width = '100%';
+  document.getElementById('fc-count').textContent = '';
+  const cc = document.getElementById('complete-card');
+  cc.classList.remove('hidden');
+  document.getElementById('cs-right').textContent = session.right;
+  document.getElementById('cs-wrong').textContent = session.wrong;
+  document.getElementById('cs-total').textContent = session.right + session.wrong;
+  const acc = session.right + session.wrong > 0 ? Math.round(session.right / (session.right + session.wrong) * 100) : 0;
+  document.getElementById('complete-sub').textContent = `${acc}% accuracy across ${session.cards.length} card${session.cards.length !== 1 ? 's' : ''}.`;
+  data.lastStudied = new Date().toDateString();
+  saveData(data);
+}
+
+function restartSession() {
+  const cards = session.cards.map(c => ({ ...c, due: true }));
+  cards.forEach(card => {
+    const sid = card.subjectId || session.subjectId;
+    if (sid && data.cards[sid]) {
+      const i = data.cards[sid].findIndex(c => c.id === card.id);
+      if (i !== -1) data.cards[sid][i].due = true;
+    }
+  });
+  saveData(data);
+  beginSession(cards, session.subjectId);
+}
+
+function showManage() {
+  renderManage();
+  show('manage-view');
+}
+
+function renderManage() {
+  const el = document.getElementById('manage-content');
+  const dark = isDark();
+  el.innerHTML = SUBJECTS.map(s => {
+    const cards = data.cards[s.id] || [];
+    const iconBg = dark ? s.darkColor : s.color;
+    const iconCol = dark ? s.darkIconColor : s.iconColor;
+    return `
+      <div class="subject-section">
+        <h3>
+          <span style="width:26px;height:26px;border-radius:6px;background:${iconBg};display:inline-flex;align-items:center;justify-content:center;">
+            <i class="ti ${s.icon}" style="color:${iconCol};font-size:14px" aria-hidden="true"></i>
+          </span>
+          ${s.name}
+          <span style="font-size:12px;color:var(--text3);font-weight:400;">${cards.length} cards</span>
+        </h3>
+        <div class="card-list" id="list-${s.id}">
+          ${cards.map((c, i) => `
+            <div class="card-list-item">
+              <div style="flex:1">
+                <div class="q-text">${escHtml(c.q)}</div>
+                <div class="a-text" style="margin-top:4px">${escHtml(c.a)}</div>
+              </div>
+              <button class="del-btn" onclick="deleteCard('${s.id}', ${i})" aria-label="Delete card">
+                <i class="ti ti-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+          `).join('')}
+        </div>
+        <div class="add-card-form" id="form-${s.id}">
+          <div class="form-row">
+            <input type="text" id="q-${s.id}" placeholder="Question…" />
+          </div>
+          <input type="text" id="a-${s.id}" placeholder="Answer…" />
+          <div>
+            <button class="btn" onclick="addCard('${s.id}')">
+              <i class="ti ti-plus" aria-hidden="true"></i> Add card
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function addCard(subjectId) {
+  const q = document.getElementById('q-' + subjectId).value.trim();
+  const a = document.getElementById('a-' + subjectId).value.trim();
+  if (!q || !a) return;
+  if (!data.cards[subjectId]) data.cards[subjectId] = [];
+  const id = Date.now();
+  data.cards[subjectId].push({ q, a, id, due: true });
+  saveData(data);
+  renderManage();
+}
+
+function deleteCard(subjectId, idx) {
+  if (!confirm('Delete this card?')) return;
+  data.cards[subjectId].splice(idx, 1);
+  saveData(data);
+  renderManage();
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning.';
+  if (h < 18) return 'Good afternoon.';
+  return 'Good evening.';
+}
+
+document.querySelector('h1').textContent = getGreeting();
+
+const streakDays = data.streak || 1;
+document.getElementById('streak-text').textContent =
+  streakDays === 1
+    ? 'Start studying to build your streak.'
+    : `You're on a ${streakDays}-day streak. Keep it up!`;
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (!document.getElementById('home-view').classList.contains('page-hidden')) renderHome();
+  if (!document.getElementById('manage-view').classList.contains('page-hidden')) renderManage();
+});
+
+renderHome();
+</script>
+</body>
+</html>
