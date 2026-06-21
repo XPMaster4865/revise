@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -62,15 +63,79 @@
     html { font-size: 16px; -webkit-font-smoothing: antialiased; }
     body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* Layout */
+    /* ── AUTH SCREEN ─────────────────────────────────────────────────────── */
+    #auth-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .auth-wrap { width: 100%; max-width: 360px; }
+    .auth-logo {
+      font-size: 22px; font-weight: 600; letter-spacing: -0.5px;
+      text-align: center; margin-bottom: 2rem; color: var(--text);
+    }
+    .auth-logo em { color: var(--purple); font-style: normal; }
+    .auth-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.75rem;
+    }
+    .auth-tabs { display: flex; background: var(--surface2); border-radius: var(--radius); padding: 3px; margin-bottom: 1.5rem; }
+    .auth-tab {
+      flex: 1; border: none; background: none; border-radius: 8px;
+      padding: 7px; font-size: 13px; font-family: inherit; cursor: pointer;
+      color: var(--text2); font-weight: 500; transition: background 0.15s, color 0.15s;
+    }
+    .auth-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .auth-field {
+      width: 100%; background: var(--surface2); border: 0.5px solid var(--border-md);
+      border-radius: var(--radius); padding: 11px 13px; font-size: 14px;
+      font-family: inherit; color: var(--text); outline: none;
+      margin-bottom: 10px; transition: border-color 0.15s;
+    }
+    .auth-field:focus { border-color: var(--purple); }
+    .auth-btn {
+      width: 100%; border: none; border-radius: var(--radius); padding: 11px;
+      font-size: 14px; font-family: inherit; cursor: pointer; font-weight: 500;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.15s; margin-bottom: 8px;
+    }
+    .auth-btn-primary { background: var(--purple); color: #fff; }
+    .auth-btn-primary:hover { opacity: 0.88; }
+    .auth-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .auth-btn-outline {
+      background: none; border: 0.5px solid var(--border-md); color: var(--text2);
+    }
+    .auth-btn-outline:hover { background: var(--surface2); color: var(--text); }
+    .auth-divider {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12px; color: var(--text3); margin: 12px 0;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: ''; flex: 1; height: 0.5px; background: var(--border-md);
+    }
+    .auth-error {
+      background: var(--red-light); color: var(--red); border-radius: var(--radius);
+      padding: 9px 12px; font-size: 13px; margin-bottom: 12px; display: none;
+    }
+    .auth-info {
+      background: var(--purple-light); color: var(--purple-text); border-radius: var(--radius);
+      padding: 9px 12px; font-size: 13px; margin-bottom: 12px; display: none; text-align: center;
+    }
+    .auth-link { font-size: 13px; color: var(--purple); cursor: pointer; background: none; border: none; font-family: inherit; }
+    .auth-link:hover { text-decoration: underline; }
+    .auth-footer { text-align: center; font-size: 13px; color: var(--text3); margin-top: 14px; }
+
+    /* Google icon */
+    .google-icon { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── APP ─────────────────────────────────────────────────────────────── */
+    #app { display: none; }
+    #app.visible { display: block; }
+
     .shell { max-width: 860px; margin: 0 auto; padding: 0 24px; }
 
-    /* Nav */
     nav {
       position: sticky; top: 0; z-index: 100;
-      background: var(--bg);
-      border-bottom: 0.5px solid var(--border);
-      padding: 0;
+      background: var(--bg); border-bottom: 0.5px solid var(--border);
     }
     .nav-inner {
       max-width: 860px; margin: 0 auto; padding: 0 24px;
@@ -84,45 +149,43 @@
     .btn-primary { background: var(--purple); color: #fff; border-color: transparent; font-weight: 500; }
     .btn-primary:hover { opacity: 0.88; background: var(--purple); color: #fff; }
 
-    /* Page sections */
+    /* Avatar */
+    .avatar-btn {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--purple);
+      color: #fff; font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s; overflow: hidden; padding: 0;
+    }
+    .avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-btn:hover { opacity: 0.85; }
+
     .page { padding: 2rem 0 4rem; }
     .page-hidden { display: none !important; }
 
-    /* Headings */
     h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; color: var(--text); }
     h2 { font-size: 18px; font-weight: 500; color: var(--text); }
     .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
 
-    /* Stats */
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 2rem; }
     .stat-card { background: var(--surface2); border-radius: var(--radius); padding: 14px 16px; }
     .stat-val { font-size: 24px; font-weight: 600; color: var(--text); }
     .stat-lbl { font-size: 12px; color: var(--text3); margin-top: 2px; }
 
-    /* Subject cards */
     .subjects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 2.5rem; }
     .subject-card {
       background: var(--surface); border: 0.5px solid var(--border);
       border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; cursor: pointer;
-      transition: border-color 0.15s, transform 0.12s;
-      position: relative; overflow: hidden;
+      transition: border-color 0.15s, transform 0.12s; position: relative; overflow: hidden;
     }
     .subject-card:hover { border-color: var(--border-md); transform: translateY(-1px); }
-    .subject-card.active-card { border: 1.5px solid var(--purple); }
     .subject-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 19px; }
     .subject-name { font-size: 15px; font-weight: 500; margin-bottom: 3px; }
     .subject-meta { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
     .pbar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
     .pbar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
     .mastery-label { font-size: 11px; color: var(--text3); margin-top: 5px; }
-    .due-badge {
-      position: absolute; top: 12px; right: 12px;
-      font-size: 11px; font-weight: 600;
-      background: var(--purple); color: #fff;
-      border-radius: 20px; padding: 2px 8px;
-    }
+    .due-badge { position: absolute; top: 12px; right: 12px; font-size: 11px; font-weight: 600; background: var(--purple); color: #fff; border-radius: 20px; padding: 2px 8px; }
 
-    /* Due today list */
     .due-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
     .due-item:last-child { border-bottom: none; }
     .due-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
@@ -132,7 +195,6 @@
     .streak-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); margin-bottom: 2rem; }
     .streak-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); }
 
-    /* Flashcard view */
     #fc-view .back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
     #fc-view .fc-title { font-size: 16px; font-weight: 500; }
     #fc-view .fc-count { margin-left: auto; font-size: 13px; color: var(--text3); }
@@ -144,13 +206,9 @@
       border-radius: var(--radius-lg); padding: 3rem 2rem;
       min-height: 220px; display: flex; flex-direction: column;
       align-items: center; justify-content: center; text-align: center;
-      cursor: pointer; position: relative; margin-bottom: 1rem;
-      transition: border-color 0.15s;
-      perspective: 1000px;
+      cursor: pointer; margin-bottom: 1rem; transition: border-color 0.15s;
     }
     .flashcard:hover { border-color: var(--border-md); }
-    .fc-scene { width: 100%; height: 100%; position: relative; }
-    .fc-side { position: absolute; width: 100%; top: 0; left: 0; }
     .card-side-lbl { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 1rem; }
     .card-q { font-size: 20px; font-weight: 500; color: var(--text); line-height: 1.45; }
     .card-a { font-size: 16px; color: var(--text2); line-height: 1.6; }
@@ -166,7 +224,6 @@
     .btn-right:hover { background: var(--green-light) !important; }
     .hidden { display: none !important; }
 
-    /* Complete screen */
     .complete-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 3rem 2rem; text-align: center; }
     .complete-icon { font-size: 44px; color: var(--purple); margin-bottom: 1rem; }
     .complete-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
@@ -178,30 +235,69 @@
     .green-val { color: var(--green); }
     .red-val { color: var(--red); }
 
-    /* Manage page */
     #manage-view h2 { margin-bottom: 1.5rem; }
     .subject-section { margin-bottom: 2rem; }
     .subject-section h3 { font-size: 15px; font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
     .card-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-    .card-list-item {
-      background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius);
-      padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px;
-    }
+    .card-list-item { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px; }
     .card-list-item .q-text { font-size: 14px; color: var(--text); flex: 1; }
     .card-list-item .a-text { font-size: 13px; color: var(--text2); flex: 1; }
     .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; flex-shrink: 0; padding: 2px; }
     .del-btn:hover { color: var(--red); }
     .add-card-form { display: flex; flex-direction: column; gap: 8px; }
-    .add-card-form input, .add-card-form textarea {
-      background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius);
-      padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text);
-      outline: none; width: 100%; resize: vertical;
-    }
-    .add-card-form input:focus, .add-card-form textarea:focus { border-color: var(--purple); }
+    .add-card-form input { background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text); outline: none; width: 100%; }
+    .add-card-form input:focus { border-color: var(--purple); }
     .add-card-form .form-row { display: flex; gap: 8px; }
     .add-card-form .form-row input { flex: 1; }
 
-    /* Responsive */
+    /* ── ACCOUNT MODAL ───────────────────────────────────────────────────── */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal { background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius-lg); padding: 0; width: 100%; max-width: 400px; overflow: hidden; }
+    .modal-header { padding: 1.25rem 1.5rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-size: 15px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 2px; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 1.25rem 1.5rem; }
+
+    .account-avatar {
+      width: 52px; height: 52px; border-radius: 50%; background: var(--purple);
+      color: #fff; font-size: 20px; font-weight: 600; display: flex;
+      align-items: center; justify-content: center; margin: 0 auto 10px; overflow: hidden;
+    }
+    .account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .account-email { text-align: center; font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; }
+
+    .modal-section { margin-bottom: 1.25rem; }
+    .modal-section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+    .modal-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; background: var(--surface2); border-radius: var(--radius);
+      margin-bottom: 6px;
+    }
+    .modal-row-icon { font-size: 17px; color: var(--text2); flex-shrink: 0; }
+    .modal-row-text { flex: 1; }
+    .modal-row-text strong { font-size: 13px; font-weight: 500; display: block; }
+    .modal-row-text span { font-size: 12px; color: var(--text3); }
+    .modal-row-action { background: none; border: 0.5px solid var(--border-md); border-radius: 7px; padding: 5px 11px; font-size: 12px; font-family: inherit; cursor: pointer; color: var(--text2); white-space: nowrap; }
+    .modal-row-action:hover { background: var(--surface); color: var(--text); }
+    .modal-row-action.connected { color: var(--green); border-color: var(--green-light); }
+
+    .passkey-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface2); border-radius: var(--radius); margin-bottom: 6px; }
+    .passkey-item-name { flex: 1; font-size: 13px; }
+    .passkey-item-date { font-size: 11px; color: var(--text3); }
+    .passkey-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px; }
+    .passkey-del:hover { color: var(--red); }
+
+    .modal-footer { padding: 1rem 1.5rem; border-top: 0.5px solid var(--border); }
+
+    /* ── SPINNER / TOAST ─────────────────────────────────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .spin-dark { border-color: rgba(0,0,0,0.15); border-top-color: var(--purple); }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); border-radius: var(--radius); padding: 10px 18px; font-size: 13px; font-weight: 500; z-index: 400; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; }
+
     @media (max-width: 600px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .subjects { grid-template-columns: repeat(2, 1fr); }
@@ -214,121 +310,529 @@
 </head>
 <body>
 
-<nav>
-  <div class="nav-inner">
-    <div class="logo">re<em>vise</em></div>
-    <div class="nav-right">
-      <button class="btn" id="manage-btn" onclick="showManage()">
-        <i class="ti ti-cards" aria-hidden="true"></i> Manage cards
+<!-- ══════════════════ AUTH SCREEN ══════════════════ -->
+<div id="auth-screen">
+  <div class="auth-wrap">
+    <div class="auth-logo">re<em>vise</em></div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign in</button>
+        <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Sign up</button>
+      </div>
+
+      <div id="auth-error" class="auth-error"></div>
+      <div id="auth-info" class="auth-info"></div>
+
+      <!-- SIGN IN -->
+      <div id="panel-signin">
+        <input class="auth-field" type="email" id="signin-email" placeholder="Email address" autocomplete="email" />
+        <input class="auth-field" type="password" id="signin-password" placeholder="Password" autocomplete="current-password" />
+        <button class="auth-btn auth-btn-primary" id="signin-btn" onclick="doSignIn()">
+          Sign in
+        </button>
+        <div style="text-align:right; margin-bottom:4px;">
+          <button class="auth-link" onclick="doForgotPassword()">Forgot password?</button>
+        </div>
+        <div class="auth-divider">or</div>
+        <button class="auth-btn auth-btn-outline" onclick="doGoogleAuth()">
+          <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+        <button class="auth-btn auth-btn-outline" id="passkey-signin-btn" onclick="doPasskeySignIn()" style="margin-top:0;">
+          <i class="ti ti-fingerprint" style="font-size:16px"></i> Sign in with passkey
+        </button>
+      </div>
+
+      <!-- SIGN UP -->
+      <div id="panel-signup" class="hidden">
+        <input class="auth-field" type="email" id="signup-email" placeholder="Email address" autocomplete="email" />
+        <input class="auth-field" type="password" id="signup-password" placeholder="Password (min 8 characters)" autocomplete="new-password" />
+        <button class="auth-btn auth-btn-primary" id="signup-btn" onclick="doSignUp()">
+          Create account
+        </button>
+        <div class="auth-divider">or</div>
+        <button class="auth-btn auth-btn-outline" onclick="doGoogleAuth()">
+          <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div id="app">
+  <nav>
+    <div class="nav-inner">
+      <div class="logo">re<em>vise</em></div>
+      <div class="nav-right">
+        <button class="btn" onclick="showManage()">
+          <i class="ti ti-cards" aria-hidden="true"></i> Manage cards
+        </button>
+        <button class="btn btn-primary" onclick="studyAll()">
+          <i class="ti ti-player-play" aria-hidden="true"></i> Study all due
+        </button>
+        <button class="avatar-btn" id="nav-avatar" onclick="openAccount()" title="Account"></button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HOME -->
+  <div id="home-view" class="page shell">
+    <div style="margin-bottom:1.75rem;">
+      <h1 id="home-greeting" style="margin-bottom:6px;"></h1>
+      <div class="streak-row">
+        <span class="streak-dot"></span>
+        <span id="streak-text">Start studying to build your streak.</span>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Cards total</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-mastery">0%</div><div class="stat-lbl">Avg mastery</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Day streak</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-due">0</div><div class="stat-lbl">Due today</div></div>
+    </div>
+    <div class="section-label">Subjects</div>
+    <div class="subjects" id="subjects-grid"></div>
+    <div class="section-label">Due today</div>
+    <div id="due-list"></div>
+  </div>
+
+  <!-- FLASHCARD -->
+  <div id="fc-view" class="page shell page-hidden">
+    <div class="back-row">
+      <button class="btn" onclick="goHome()"><i class="ti ti-arrow-left"></i> Back</button>
+      <span class="fc-title" id="fc-title"></span>
+      <span class="fc-count" id="fc-count"></span>
+    </div>
+    <div class="progress-track"><div class="progress-track-fill" id="fc-progress"></div></div>
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div>
+        <div class="card-side-lbl" id="card-side-lbl">Question</div>
+        <div class="card-q" id="card-main"></div>
+        <div class="tap-hint" id="tap-hint"><i class="ti ti-hand-click"></i> Tap to reveal answer</div>
+      </div>
+    </div>
+    <div class="card-btns hidden" id="card-btns">
+      <button class="btn-wrong" onclick="markCard('wrong')"><i class="ti ti-x"></i> Didn't know</button>
+      <button class="btn-skip" onclick="markCard('skip')"><i class="ti ti-arrow-right"></i> Skip</button>
+      <button class="btn-right" onclick="markCard('right')"><i class="ti ti-check"></i> Got it</button>
+    </div>
+    <div class="complete-card hidden" id="complete-card">
+      <div class="complete-icon"><i class="ti ti-confetti"></i></div>
+      <div class="complete-title">Session complete!</div>
+      <div class="complete-sub" id="complete-sub"></div>
+      <div class="complete-stats">
+        <div class="cs"><div class="cs-val green-val" id="cs-right">0</div><div class="cs-lbl">Correct</div></div>
+        <div class="cs"><div class="cs-val red-val" id="cs-wrong">0</div><div class="cs-lbl">Missed</div></div>
+        <div class="cs"><div class="cs-val" id="cs-total">0</div><div class="cs-lbl">Reviewed</div></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn" onclick="restartSession()"><i class="ti ti-refresh"></i> Study again</button>
+        <button class="btn btn-primary" onclick="goHome()"><i class="ti ti-home"></i> Home</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGE -->
+  <div id="manage-view" class="page shell page-hidden">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;">
+      <button class="btn" onclick="goHome()"><i class="ti ti-arrow-left"></i> Back</button>
+      <h2 style="margin:0;">Manage cards</h2>
+    </div>
+    <div id="manage-content"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ ACCOUNT MODAL ══════════════════ -->
+<div id="account-modal" class="modal-backdrop hidden" onclick="closeAccountOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Account</h3>
+      <button class="modal-close" onclick="closeAccount()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="account-avatar" id="modal-avatar"></div>
+      <div class="account-email" id="modal-email"></div>
+
+      <div class="modal-section">
+        <div class="modal-section-label">Connected accounts</div>
+        <div class="modal-row" id="google-row">
+          <svg class="google-icon modal-row-icon" style="width:18px;height:18px" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <div class="modal-row-text">
+            <strong>Google</strong>
+            <span id="google-status">Not connected</span>
+          </div>
+          <button class="modal-row-action" id="google-btn" onclick="toggleGoogle()">Connect</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-label">Passkeys</div>
+        <div id="passkeys-list"></div>
+        <button class="btn" style="width:100%;justify-content:center;margin-top:4px;" onclick="addPasskey()">
+          <i class="ti ti-fingerprint"></i> Add passkey
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="width:100%;justify-content:center;color:var(--red);" onclick="doSignOut()">
+        <i class="ti ti-logout"></i> Sign out
       </button>
-      <button class="btn btn-primary" id="study-all-btn" onclick="studyAll()">
-        <i class="ti ti-player-play" aria-hidden="true"></i> Study all due
-      </button>
-    </div>
-  </div>
-</nav>
-
-<!-- HOME -->
-<div id="home-view" class="page shell">
-  <div style="margin-bottom: 1.75rem;">
-    <h1 style="margin-bottom: 6px;">Good evening. <span id="greeting-name"></span></h1>
-    <div class="streak-row">
-      <span class="streak-dot"></span>
-      <span id="streak-text">You're on a 1-day streak. Keep it up.</span>
-    </div>
-  </div>
-
-  <div class="stats">
-    <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Cards total</div></div>
-    <div class="stat-card"><div class="stat-val" id="s-mastery">0%</div><div class="stat-lbl">Avg mastery</div></div>
-    <div class="stat-card"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Day streak</div></div>
-    <div class="stat-card"><div class="stat-val" id="s-due">0</div><div class="stat-lbl">Due today</div></div>
-  </div>
-
-  <div class="section-label">Subjects</div>
-  <div class="subjects" id="subjects-grid"></div>
-
-  <div class="section-label">Due today</div>
-  <div id="due-list"></div>
-</div>
-
-<!-- FLASHCARD SESSION -->
-<div id="fc-view" class="page shell page-hidden">
-  <div class="back-row">
-    <button class="btn" onclick="goHome()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back</button>
-    <span class="fc-title" id="fc-title"></span>
-    <span class="fc-count" id="fc-count"></span>
-  </div>
-  <div class="progress-track"><div class="progress-track-fill" id="fc-progress"></div></div>
-
-  <div class="flashcard" id="flashcard" onclick="flipCard()" role="button" aria-label="Flashcard — click to flip">
-    <div>
-      <div class="card-side-lbl" id="card-side-lbl">Question</div>
-      <div class="card-q" id="card-main"></div>
-      <div class="tap-hint" id="tap-hint"><i class="ti ti-hand-click" aria-hidden="true"></i> Tap to reveal answer</div>
-    </div>
-  </div>
-
-  <div class="card-btns hidden" id="card-btns">
-    <button class="btn-wrong" onclick="markCard('wrong')"><i class="ti ti-x" aria-hidden="true"></i> Didn't know</button>
-    <button class="btn-skip" onclick="markCard('skip')"><i class="ti ti-arrow-right" aria-hidden="true"></i> Skip</button>
-    <button class="btn-right" onclick="markCard('right')"><i class="ti ti-check" aria-hidden="true"></i> Got it</button>
-  </div>
-
-  <div class="complete-card hidden" id="complete-card">
-    <div class="complete-icon"><i class="ti ti-confetti" aria-hidden="true"></i></div>
-    <div class="complete-title">Session complete!</div>
-    <div class="complete-sub" id="complete-sub"></div>
-    <div class="complete-stats">
-      <div class="cs"><div class="cs-val green-val" id="cs-right">0</div><div class="cs-lbl">Correct</div></div>
-      <div class="cs"><div class="cs-val red-val" id="cs-wrong">0</div><div class="cs-lbl">Missed</div></div>
-      <div class="cs"><div class="cs-val" id="cs-total">0</div><div class="cs-lbl">Reviewed</div></div>
-    </div>
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button class="btn" onclick="restartSession()"><i class="ti ti-refresh" aria-hidden="true"></i> Study again</button>
-      <button class="btn btn-primary" onclick="goHome()"><i class="ti ti-home" aria-hidden="true"></i> Home</button>
     </div>
   </div>
 </div>
 
-<!-- MANAGE CARDS -->
-<div id="manage-view" class="page shell page-hidden">
-  <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
-    <button class="btn" onclick="goHome()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back</button>
-    <h2 style="margin:0;">Manage cards</h2>
-  </div>
-  <div id="manage-content"></div>
-</div>
+<div id="toast" class="toast"></div>
 
 <script>
+// ══════════════════════════════════════════════════════════════════════════════
+// CONFIG — replace with your Supabase project values
+// Get them from: https://supabase.com/dashboard → your project → Settings → API
+// ══════════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL';   // e.g. https://abcdefgh.supabase.co
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser = null;
+
+// ── AUTH INIT ─────────────────────────────────────────────────────────────────
+
+async function initAuth() {
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+    // Dev mode — skip auth for local testing
+    showApp({ email: 'dev@local', id: 'local' });
+    return;
+  }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) showApp(session.user);
+  else showAuthScreen();
+
+  sb.auth.onAuthStateChange((_event, session) => {
+    if (session) showApp(session.user);
+    else showAuthScreen();
+  });
+}
+
+function showApp(user) {
+  currentUser = user;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  updateNavAvatar(user);
+  data = loadData();
+  renderHome();
+}
+
+function showAuthScreen() {
+  currentUser = null;
+  document.getElementById('auth-screen').style.display = '';
+  document.getElementById('app').classList.remove('visible');
+  clearAuthMessages();
+}
+
+// ── AUTH TAB TOGGLE ───────────────────────────────────────────────────────────
+
+function switchTab(mode) {
+  const isSignin = mode === 'signin';
+  document.getElementById('tab-signin').classList.toggle('active', isSignin);
+  document.getElementById('tab-signup').classList.toggle('active', !isSignin);
+  document.getElementById('panel-signin').classList.toggle('hidden', !isSignin);
+  document.getElementById('panel-signup').classList.toggle('hidden', isSignin);
+  clearAuthMessages();
+}
+
+function clearAuthMessages() {
+  setAuthError('');
+  setAuthInfo('');
+}
+
+function setAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function setAuthInfo(msg) {
+  const el = document.getElementById('auth-info');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function setBtnLoading(id, loading, defaultLabel) {
+  const btn = document.getElementById(id);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<span class="spin"></span>' : defaultLabel;
+}
+
+// ── SIGN IN ───────────────────────────────────────────────────────────────────
+
+async function doSignIn() {
+  const email = document.getElementById('signin-email').value.trim();
+  const password = document.getElementById('signin-password').value;
+  if (!email || !password) { setAuthError('Enter your email and password.'); return; }
+  clearAuthMessages();
+  setBtnLoading('signin-btn', true, 'Sign in');
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  setBtnLoading('signin-btn', false, 'Sign in');
+  if (error) setAuthError(error.message);
+}
+
+// ── SIGN UP ───────────────────────────────────────────────────────────────────
+
+async function doSignUp() {
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  if (!email) { setAuthError('Enter your email.'); return; }
+  if (password.length < 8) { setAuthError('Password must be at least 8 characters.'); return; }
+  clearAuthMessages();
+  setBtnLoading('signup-btn', true, 'Create account');
+  const { error } = await sb.auth.signUp({ email, password });
+  setBtnLoading('signup-btn', false, 'Create account');
+  if (error) { setAuthError(error.message); return; }
+  setAuthInfo('Check your email for a confirmation link, then sign in.');
+  switchTab('signin');
+}
+
+// ── GOOGLE ────────────────────────────────────────────────────────────────────
+
+async function doGoogleAuth() {
+  clearAuthMessages();
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname },
+  });
+  if (error) setAuthError(error.message);
+}
+
+// ── FORGOT PASSWORD ───────────────────────────────────────────────────────────
+
+async function doForgotPassword() {
+  const email = document.getElementById('signin-email').value.trim();
+  if (!email) { setAuthError('Enter your email address first.'); return; }
+  clearAuthMessages();
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname,
+  });
+  if (error) setAuthError(error.message);
+  else setAuthInfo('Password reset email sent! Check your inbox.');
+}
+
+// ── SIGN OUT ──────────────────────────────────────────────────────────────────
+
+async function doSignOut() {
+  closeAccount();
+  await sb.auth.signOut();
+}
+
+// ── PASSKEY SIGN IN ───────────────────────────────────────────────────────────
+
+async function doPasskeySignIn() {
+  if (!window.PublicKeyCredential) {
+    setAuthError('Your browser does not support passkeys.');
+    return;
+  }
+  clearAuthMessages();
+  try {
+    // Supabase native passkey sign-in
+    const { error } = await sb.auth.signInWithPasskey({ email: document.getElementById('signin-email').value.trim() || undefined });
+    if (error) setAuthError(error.message);
+  } catch (e) {
+    setAuthError('Passkey sign-in not available. Please use email/password or Google.');
+  }
+}
+
+// ── PASSKEY ENROLL (in account modal) ────────────────────────────────────────
+
+async function addPasskey() {
+  if (!window.PublicKeyCredential) {
+    showToast('Your browser does not support passkeys.');
+    return;
+  }
+  try {
+    const { data, error } = await sb.auth.mfa.enroll({
+      factorType: 'webauthn',
+      friendlyName: 'Passkey — ' + new Date().toLocaleDateString(),
+    });
+    if (error) throw error;
+    // Complete the WebAuthn ceremony
+    if (data?.webauthn?.credential_creation_options) {
+      const cco = data.webauthn.credential_creation_options;
+      // Convert base64url to ArrayBuffer
+      cco.challenge = b64ToBuffer(cco.challenge);
+      cco.user.id = b64ToBuffer(cco.user.id);
+      if (cco.excludeCredentials) {
+        cco.excludeCredentials = cco.excludeCredentials.map(c => ({ ...c, id: b64ToBuffer(c.id) }));
+      }
+      const credential = await navigator.credentials.create({ publicKey: cco });
+      const { error: verifyError } = await sb.auth.mfa.challengeAndVerify({
+        factorId: data.id,
+        code: JSON.stringify(credentialToJSON(credential)),
+      });
+      if (verifyError) throw verifyError;
+    }
+    showToast('Passkey added!');
+    renderPasskeys();
+  } catch (e) {
+    if (e.name === 'NotAllowedError') showToast('Passkey registration cancelled.');
+    else showToast(e.message || 'Could not add passkey.');
+  }
+}
+
+function b64ToBuffer(b64) {
+  const str = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(str, c => c.charCodeAt(0)).buffer;
+}
+
+function credentialToJSON(cred) {
+  const response = cred.response;
+  return {
+    id: cred.id,
+    rawId: bufferToB64(cred.rawId),
+    type: cred.type,
+    response: {
+      clientDataJSON: bufferToB64(response.clientDataJSON),
+      attestationObject: bufferToB64(response.attestationObject),
+    },
+  };
+}
+
+function bufferToB64(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function removePasskey(factorId) {
+  const { error } = await sb.auth.mfa.unenroll({ factorId });
+  if (error) { showToast(error.message); return; }
+  showToast('Passkey removed.');
+  renderPasskeys();
+}
+
+async function renderPasskeys() {
+  const list = document.getElementById('passkeys-list');
+  list.innerHTML = '<span style="font-size:12px;color:var(--text3)">Loading…</span>';
+  try {
+    const { data, error } = await sb.auth.mfa.listFactors();
+    if (error) throw error;
+    const webauthn = (data?.all || []).filter(f => f.factor_type === 'webauthn' && f.status === 'verified');
+    if (!webauthn.length) {
+      list.innerHTML = '<p style="font-size:13px;color:var(--text3);margin-bottom:8px;">No passkeys yet.</p>';
+      return;
+    }
+    list.innerHTML = webauthn.map(f => `
+      <div class="passkey-item">
+        <i class="ti ti-fingerprint" style="color:var(--purple);font-size:17px"></i>
+        <span class="passkey-item-name">${escHtml(f.friendly_name || 'Passkey')}</span>
+        <span class="passkey-item-date">${new Date(f.created_at).toLocaleDateString()}</span>
+        <button class="passkey-del" onclick="removePasskey('${f.id}')" title="Remove"><i class="ti ti-trash"></i></button>
+      </div>
+    `).join('');
+  } catch {
+    list.innerHTML = '<p style="font-size:13px;color:var(--text3);margin-bottom:8px;">Passkeys unavailable.</p>';
+  }
+}
+
+// ── GOOGLE CONNECT / DISCONNECT ───────────────────────────────────────────────
+
+async function toggleGoogle() {
+  if (!currentUser) return;
+  const identities = currentUser.identities || [];
+  const hasGoogle = identities.some(i => i.provider === 'google');
+  if (hasGoogle) {
+    const { error } = await sb.auth.unlinkIdentity(identities.find(i => i.provider === 'google'));
+    if (error) { showToast(error.message); return; }
+    showToast('Google disconnected.');
+    const { data: { user } } = await sb.auth.getUser();
+    currentUser = user;
+    renderGoogleStatus();
+  } else {
+    await sb.auth.linkIdentity({ provider: 'google' });
+  }
+}
+
+function renderGoogleStatus() {
+  if (!currentUser) return;
+  const hasGoogle = (currentUser.identities || []).some(i => i.provider === 'google');
+  document.getElementById('google-status').textContent = hasGoogle ? 'Connected' : 'Not connected';
+  const btn = document.getElementById('google-btn');
+  btn.textContent = hasGoogle ? 'Disconnect' : 'Connect';
+  btn.className = 'modal-row-action' + (hasGoogle ? ' connected' : '');
+}
+
+// ── ACCOUNT MODAL ─────────────────────────────────────────────────────────────
+
+function openAccount() {
+  if (!currentUser) return;
+  const modal = document.getElementById('account-modal');
+  modal.classList.remove('hidden');
+
+  // Avatar
+  const avatarEl = document.getElementById('modal-avatar');
+  const avatarUrl = currentUser.user_metadata?.avatar_url;
+  if (avatarUrl) avatarEl.innerHTML = `<img src="${avatarUrl}" alt="avatar">`;
+  else avatarEl.textContent = initials(currentUser.email);
+
+  document.getElementById('modal-email').textContent = currentUser.email;
+  renderGoogleStatus();
+  renderPasskeys();
+}
+
+function closeAccount() {
+  document.getElementById('account-modal').classList.add('hidden');
+}
+
+function closeAccountOutside(e) {
+  if (e.target === document.getElementById('account-modal')) closeAccount();
+}
+
+function updateNavAvatar(user) {
+  const btn = document.getElementById('nav-avatar');
+  if (!user) return;
+  const url = user.user_metadata?.avatar_url;
+  if (url) btn.innerHTML = `<img src="${url}" alt="">`;
+  else btn.textContent = initials(user.email);
+}
+
+function initials(email) {
+  return (email || '?')[0].toUpperCase();
+}
+
+// ── KEY PRESS SUPPORT ─────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (!document.getElementById('panel-signin').classList.contains('hidden') &&
+        document.getElementById('auth-screen').style.display !== 'none') doSignIn();
+    if (!document.getElementById('panel-signup').classList.contains('hidden') &&
+        document.getElementById('auth-screen').style.display !== 'none') doSignUp();
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// APP
+// ══════════════════════════════════════════════════════════════════════════════
+
 const SUBJECTS = [
-  {
-    id: 'math',
-    name: 'Mathematics',
-    icon: 'ti-math-function',
-    color: '#EEEDFE',
-    iconColor: '#534AB7',
-    darkColor: '#26215C',
-    darkIconColor: '#AFA9EC',
-  },
-  {
-    id: 'science',
-    name: 'Science',
-    icon: 'ti-flask',
-    color: '#E6F1FB',
-    iconColor: '#185FA5',
-    darkColor: '#042C53',
-    darkIconColor: '#85B7EB',
-  },
-  {
-    id: 'english',
-    name: 'English',
-    icon: 'ti-writing',
-    color: '#FAECE7',
-    iconColor: '#993C1D',
-    darkColor: '#4A1B0C',
-    darkIconColor: '#F0997B',
-  },
+  { id: 'math', name: 'Mathematics', icon: 'ti-math-function', color: '#EEEDFE', iconColor: '#534AB7', darkColor: '#26215C', darkIconColor: '#AFA9EC' },
+  { id: 'science', name: 'Science', icon: 'ti-flask', color: '#E6F1FB', iconColor: '#185FA5', darkColor: '#042C53', darkIconColor: '#85B7EB' },
+  { id: 'english', name: 'English', icon: 'ti-writing', color: '#FAECE7', iconColor: '#993C1D', darkColor: '#4A1B0C', darkIconColor: '#F0997B' },
 ];
 
 const DEFAULT_CARDS = {
@@ -337,94 +841,81 @@ const DEFAULT_CARDS = {
     { q: 'What is the area of a circle?', a: 'A = πr², where r is the radius.' },
     { q: 'Differentiate sin(x) with respect to x.', a: 'cos(x)' },
     { q: 'What is the Pythagorean theorem?', a: 'a² + b² = c², where c is the hypotenuse of a right-angled triangle.' },
-    { q: 'What does the gradient of a line represent?', a: 'The rate of change — how steep the line is. Calculated as rise ÷ run, or (y₂−y₁)/(x₂−x₁).' },
+    { q: 'What does the gradient of a line represent?', a: 'The rate of change — rise ÷ run, or (y₂−y₁)/(x₂−x₁).' },
     { q: 'What is the sum of interior angles of a triangle?', a: '180°' },
-    { q: 'Simplify: (x²)(x³)', a: 'x⁵ — when multiplying powers with the same base, add the exponents.' },
-    { q: 'What is the mean of a data set?', a: 'The mean is the sum of all values divided by the number of values.' },
+    { q: 'Simplify: (x²)(x³)', a: 'x⁵ — when multiplying same-base powers, add the exponents.' },
+    { q: 'What is the mean of a data set?', a: 'Sum of all values divided by the number of values.' },
   ],
   science: [
-    { q: 'What is the powerhouse of the cell?', a: 'The mitochondria — responsible for producing ATP through cellular respiration.' },
-    { q: 'Define osmosis.', a: 'The movement of water molecules through a semi-permeable membrane from high to low water potential.' },
-    { q: 'What is Newton\'s second law?', a: 'F = ma — force equals mass times acceleration.' },
-    { q: 'What is the chemical symbol for water?', a: 'H₂O — two hydrogen atoms bonded to one oxygen atom.' },
-    { q: 'What is the speed of light in a vacuum?', a: 'Approximately 3 × 10⁸ metres per second (299,792,458 m/s).' },
-    { q: 'What is photosynthesis?', a: 'The process by which plants use sunlight, water and CO₂ to produce glucose and oxygen. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
-    { q: 'What is the atomic number of carbon?', a: '6 — carbon has 6 protons in its nucleus.' },
-    { q: 'Define a covalent bond.', a: 'A chemical bond formed by the sharing of electron pairs between two atoms.' },
-    { q: 'What is the law of conservation of mass?', a: 'Matter cannot be created or destroyed in a chemical reaction — the total mass of reactants equals the total mass of products.' },
+    { q: 'What is the powerhouse of the cell?', a: 'The mitochondria — produces ATP via cellular respiration.' },
+    { q: 'Define osmosis.', a: 'Movement of water through a semi-permeable membrane from high to low water potential.' },
+    { q: "What is Newton's second law?", a: 'F = ma — force equals mass times acceleration.' },
+    { q: 'What is the chemical symbol for water?', a: 'H₂O — two hydrogen atoms bonded to one oxygen.' },
+    { q: 'What is the speed of light in a vacuum?', a: 'Approximately 3 × 10⁸ m/s.' },
+    { q: 'What is photosynthesis?', a: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂ — plants use sunlight to make glucose.' },
+    { q: 'What is the atomic number of carbon?', a: '6 — carbon has 6 protons.' },
+    { q: 'Define a covalent bond.', a: 'A bond formed by sharing electron pairs between two atoms.' },
+    { q: 'What is the law of conservation of mass?', a: 'Mass cannot be created or destroyed in a chemical reaction.' },
   ],
   english: [
-    { q: 'What is a metaphor?', a: 'A figure of speech that describes something by saying it is something else. E.g. "Time is a thief."' },
-    { q: 'What is a simile?', a: 'A comparison using "like" or "as". E.g. "She was as fast as lightning."' },
-    { q: 'Define alliteration.', a: 'The repetition of the same consonant sound at the start of closely connected words. E.g. "Peter Piper picked a peck."' },
-    { q: 'What is an oxymoron?', a: 'A figure of speech that combines two contradictory terms. E.g. "deafening silence", "bittersweet".' },
-    { q: 'What is foreshadowing?', a: 'A literary device where the author gives hints or clues about what will happen later in the story.' },
-    { q: 'Define the word "protagonist".', a: 'The main character of a story — the one the narrative centres around.' },
-    { q: 'What is dramatic irony?', a: 'When the audience knows something that the characters in the story do not.' },
-    { q: 'Define "theme" in literature.', a: 'The central idea or message the author is exploring throughout the text — e.g. power, identity, loss.' },
+    { q: 'What is a metaphor?', a: 'A figure of speech saying one thing IS another. E.g. "Time is a thief."' },
+    { q: 'What is a simile?', a: 'A comparison using "like" or "as". E.g. "Fast as lightning."' },
+    { q: 'Define alliteration.', a: 'Repetition of the same consonant sound at the start of nearby words.' },
+    { q: 'What is an oxymoron?', a: 'Two contradictory terms together. E.g. "deafening silence".' },
+    { q: 'What is foreshadowing?', a: 'Hints or clues about events that will happen later in the story.' },
+    { q: 'Define "protagonist".', a: 'The main character the narrative centres around.' },
+    { q: 'What is dramatic irony?', a: 'When the audience knows something the characters do not.' },
+    { q: 'Define "theme" in literature.', a: 'The central idea the author explores — e.g. power, identity, loss.' },
   ],
 };
 
-function isDark() {
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
+function isDark() { return window.matchMedia?.('(prefers-color-scheme: dark)').matches; }
 
 function loadData() {
-  try {
-    return JSON.parse(localStorage.getItem('revise_data') || 'null') || initData();
-  } catch { return initData(); }
+  const key = 'revise_data_' + (currentUser?.id || 'local');
+  try { return JSON.parse(localStorage.getItem(key) || 'null') || initData(); }
+  catch { return initData(); }
 }
 
 function initData() {
-  const d = { cards: {}, mastery: {}, streak: 1, lastStudied: new Date().toDateString() };
-  SUBJECTS.forEach(s => {
-    d.cards[s.id] = DEFAULT_CARDS[s.id].map((c, i) => ({ ...c, id: i, due: true }));
-    d.mastery[s.id] = 0;
-  });
+  const d = { cards: {}, streak: 1, lastStudied: new Date().toDateString() };
+  SUBJECTS.forEach(s => { d.cards[s.id] = DEFAULT_CARDS[s.id].map((c, i) => ({ ...c, id: i, due: true })); });
   return d;
 }
 
 function saveData(d) {
-  localStorage.setItem('revise_data', JSON.stringify(d));
+  const key = 'revise_data_' + (currentUser?.id || 'local');
+  localStorage.setItem(key, JSON.stringify(d));
 }
 
-let data = loadData();
+let data = initData();
 let session = { cards: [], idx: 0, right: 0, wrong: 0, subjectId: null };
 
-function allCards() {
-  return SUBJECTS.flatMap(s => (data.cards[s.id] || []).map(c => ({ ...c, subjectId: s.id })));
-}
-
-function dueCards(subjectId) {
-  const cards = subjectId ? data.cards[subjectId] : allCards();
-  return (cards || []).filter(c => c.due !== false);
-}
-
-function computeMastery(subjectId) {
-  const cards = data.cards[subjectId] || [];
-  if (!cards.length) return 0;
-  const known = cards.filter(c => c.due === false).length;
-  return Math.round((known / cards.length) * 100);
-}
+function allCards() { return SUBJECTS.flatMap(s => (data.cards[s.id] || []).map(c => ({ ...c, subjectId: s.id }))); }
+function dueCards(sid) { return ((sid ? data.cards[sid] : allCards()) || []).filter(c => c.due !== false); }
+function computeMastery(sid) { const c = data.cards[sid] || []; return c.length ? Math.round(c.filter(x => !x.due).length / c.length * 100) : 0; }
 
 function updateStats() {
   const total = SUBJECTS.reduce((n, s) => n + (data.cards[s.id] || []).length, 0);
-  const masteries = SUBJECTS.map(s => computeMastery(s.id));
-  const avgMastery = masteries.length ? Math.round(masteries.reduce((a, b) => a + b, 0) / masteries.length) : 0;
-  const due = SUBJECTS.reduce((n, s) => n + dueCards(s.id).length, 0);
-
+  const avg = Math.round(SUBJECTS.reduce((n, s) => n + computeMastery(s.id), 0) / SUBJECTS.length);
   document.getElementById('s-total').textContent = total;
-  document.getElementById('s-mastery').textContent = avgMastery + '%';
+  document.getElementById('s-mastery').textContent = avg + '%';
   document.getElementById('s-streak').textContent = data.streak || 1;
-  document.getElementById('s-due').textContent = due;
+  document.getElementById('s-due').textContent = SUBJECTS.reduce((n, s) => n + dueCards(s.id).length, 0);
 }
 
 function renderHome() {
-  updateStats();
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good morning.' : h < 18 ? 'Good afternoon.' : 'Good evening.';
+  document.getElementById('home-greeting').textContent = greet;
+  const streakDays = data.streak || 1;
+  document.getElementById('streak-text').textContent = streakDays <= 1
+    ? 'Start studying to build your streak.'
+    : `You're on a ${streakDays}-day streak. Keep it up!`;
 
+  updateStats();
   const dark = isDark();
-  const grid = document.getElementById('subjects-grid');
-  grid.innerHTML = SUBJECTS.map(s => {
+  document.getElementById('subjects-grid').innerHTML = SUBJECTS.map(s => {
     const due = dueCards(s.id).length;
     const mastery = computeMastery(s.id);
     const iconBg = dark ? s.darkColor : s.color;
@@ -432,71 +923,52 @@ function renderHome() {
     return `
       <div class="subject-card" onclick="startSubject('${s.id}')">
         ${due > 0 ? `<div class="due-badge">${due} due</div>` : ''}
-        <div class="subject-icon" style="background:${iconBg}">
-          <i class="ti ${s.icon}" style="color:${iconCol}" aria-hidden="true"></i>
-        </div>
+        <div class="subject-icon" style="background:${iconBg}"><i class="ti ${s.icon}" style="color:${iconCol}"></i></div>
         <div class="subject-name">${s.name}</div>
         <div class="subject-meta">${(data.cards[s.id]||[]).length} cards</div>
-        <div class="pbar"><div class="pbar-fill" style="width:${mastery}%; background:${iconCol}"></div></div>
+        <div class="pbar"><div class="pbar-fill" style="width:${mastery}%;background:${iconCol}"></div></div>
         <div class="mastery-label">${mastery}% mastered</div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
-  const dueSubjects = SUBJECTS.filter(s => dueCards(s.id).length > 0);
+  const dueS = SUBJECTS.filter(s => dueCards(s.id).length > 0);
   const dueList = document.getElementById('due-list');
-  if (!dueSubjects.length) {
-    dueList.innerHTML = `<p style="font-size:14px; color:var(--text3); padding:1rem 0;">All caught up — nothing due today!</p>`;
-    return;
-  }
-  dueList.innerHTML = dueSubjects.map(s => {
-    const due = dueCards(s.id).length;
-    const iconBg = dark ? s.darkColor : s.color;
-    const iconCol = dark ? s.darkIconColor : s.iconColor;
-    return `
-      <div class="due-item">
-        <div class="due-icon" style="background:${iconBg}">
-          <i class="ti ${s.icon}" style="color:${iconCol}" aria-hidden="true"></i>
-        </div>
-        <div class="due-info">
-          <div class="due-name">${s.name}</div>
-          <div class="due-count">${due} card${due !== 1 ? 's' : ''} to review</div>
-        </div>
-        <button class="btn" onclick="startSubject('${s.id}')">
-          Start <i class="ti ti-arrow-right" aria-hidden="true"></i>
-        </button>
-      </div>
-    `;
-  }).join('');
+  dueList.innerHTML = !dueS.length
+    ? `<p style="font-size:14px;color:var(--text3);padding:1rem 0;">All caught up — nothing due today!</p>`
+    : dueS.map(s => {
+        const due = dueCards(s.id).length;
+        const iconBg = dark ? s.darkColor : s.color;
+        const iconCol = dark ? s.darkIconColor : s.iconColor;
+        return `<div class="due-item">
+          <div class="due-icon" style="background:${iconBg}"><i class="ti ${s.icon}" style="color:${iconCol}"></i></div>
+          <div class="due-info"><div class="due-name">${s.name}</div><div class="due-count">${due} card${due!==1?'s':''} to review</div></div>
+          <button class="btn" onclick="startSubject('${s.id}')">Start <i class="ti ti-arrow-right"></i></button>
+        </div>`;
+      }).join('');
 }
 
 function show(id) {
-  ['home-view','fc-view','manage-view'].forEach(v => {
-    document.getElementById(v).classList.toggle('page-hidden', v !== id);
-  });
+  ['home-view','fc-view','manage-view'].forEach(v =>
+    document.getElementById(v).classList.toggle('page-hidden', v !== id));
 }
+function goHome() { renderHome(); show('home-view'); }
 
-function goHome() {
-  renderHome();
-  show('home-view');
-}
-
-function startSubject(subjectId) {
-  const cards = dueCards(subjectId);
+function startSubject(sid) {
+  const cards = dueCards(sid);
   if (!cards.length) { alert('No cards due for this subject!'); return; }
-  beginSession(cards, subjectId);
+  beginSession(cards, sid);
 }
 
 function studyAll() {
   const cards = SUBJECTS.flatMap(s => dueCards(s.id).map(c => ({ ...c, subjectId: s.id })));
-  if (!cards.length) { alert('Nothing due — you\'re all caught up!'); return; }
+  if (!cards.length) { alert("Nothing due — you're all caught up!"); return; }
   beginSession(cards, null);
 }
 
-function beginSession(cards, subjectId) {
-  session = { cards: shuffle([...cards]), idx: 0, right: 0, wrong: 0, subjectId };
-  const subject = SUBJECTS.find(s => s.id === subjectId);
-  document.getElementById('fc-title').textContent = subject ? subject.name : 'All subjects';
+function beginSession(cards, sid) {
+  session = { cards: shuffle([...cards]), idx: 0, right: 0, wrong: 0, subjectId: sid };
+  const subj = SUBJECTS.find(s => s.id === sid);
+  document.getElementById('fc-title').textContent = subj ? subj.name : 'All subjects';
   document.getElementById('complete-card').classList.add('hidden');
   document.getElementById('flashcard').classList.remove('hidden');
   document.getElementById('card-btns').classList.add('hidden');
@@ -517,8 +989,7 @@ let flipped = false;
 function showCard() {
   flipped = false;
   const card = session.cards[session.idx];
-  const pct = Math.round((session.idx / session.cards.length) * 100);
-  document.getElementById('fc-progress').style.width = pct + '%';
+  document.getElementById('fc-progress').style.width = Math.round(session.idx / session.cards.length * 100) + '%';
   document.getElementById('fc-count').textContent = `${session.idx + 1} / ${session.cards.length}`;
   document.getElementById('card-side-lbl').textContent = 'Question';
   document.getElementById('card-main').textContent = card.q;
@@ -530,9 +1001,8 @@ function showCard() {
 function flipCard() {
   if (flipped) return;
   flipped = true;
-  const card = session.cards[session.idx];
   document.getElementById('card-side-lbl').textContent = 'Answer';
-  document.getElementById('card-main').textContent = card.a;
+  document.getElementById('card-main').textContent = session.cards[session.idx].a;
   document.getElementById('tap-hint').classList.add('hidden');
   document.getElementById('card-btns').classList.remove('hidden');
   document.getElementById('flashcard').style.cursor = 'default';
@@ -543,19 +1013,14 @@ function markCard(result) {
   if (result === 'right') {
     session.right++;
     const sid = card.subjectId || session.subjectId;
-    const subjectCards = data.cards[sid];
-    const idx = subjectCards.findIndex(c => c.id === card.id);
-    if (idx !== -1) subjectCards[idx].due = false;
+    const i = (data.cards[sid] || []).findIndex(c => c.id === card.id);
+    if (i !== -1) data.cards[sid][i].due = false;
   } else if (result === 'wrong') {
     session.wrong++;
   }
-
   session.idx++;
-  if (session.idx >= session.cards.length) {
-    endSession();
-  } else {
-    showCard();
-  }
+  if (session.idx >= session.cards.length) endSession();
+  else showCard();
   saveData(data);
 }
 
@@ -564,8 +1029,7 @@ function endSession() {
   document.getElementById('card-btns').classList.add('hidden');
   document.getElementById('fc-progress').style.width = '100%';
   document.getElementById('fc-count').textContent = '';
-  const cc = document.getElementById('complete-card');
-  cc.classList.remove('hidden');
+  document.getElementById('complete-card').classList.remove('hidden');
   document.getElementById('cs-right').textContent = session.right;
   document.getElementById('cs-wrong').textContent = session.wrong;
   document.getElementById('cs-total').textContent = session.right + session.wrong;
@@ -576,8 +1040,7 @@ function endSession() {
 }
 
 function restartSession() {
-  const cards = session.cards.map(c => ({ ...c, due: true }));
-  cards.forEach(card => {
+  session.cards.forEach(card => {
     const sid = card.subjectId || session.subjectId;
     if (sid && data.cards[sid]) {
       const i = data.cards[sid].findIndex(c => c.id === card.id);
@@ -585,18 +1048,14 @@ function restartSession() {
     }
   });
   saveData(data);
-  beginSession(cards, session.subjectId);
+  beginSession(session.cards, session.subjectId);
 }
 
-function showManage() {
-  renderManage();
-  show('manage-view');
-}
+function showManage() { renderManage(); show('manage-view'); }
 
 function renderManage() {
-  const el = document.getElementById('manage-content');
   const dark = isDark();
-  el.innerHTML = SUBJECTS.map(s => {
+  document.getElementById('manage-content').innerHTML = SUBJECTS.map(s => {
     const cards = data.cards[s.id] || [];
     const iconBg = dark ? s.darkColor : s.color;
     const iconCol = dark ? s.darkIconColor : s.iconColor;
@@ -604,83 +1063,66 @@ function renderManage() {
       <div class="subject-section">
         <h3>
           <span style="width:26px;height:26px;border-radius:6px;background:${iconBg};display:inline-flex;align-items:center;justify-content:center;">
-            <i class="ti ${s.icon}" style="color:${iconCol};font-size:14px" aria-hidden="true"></i>
+            <i class="ti ${s.icon}" style="color:${iconCol};font-size:14px"></i>
           </span>
           ${s.name}
           <span style="font-size:12px;color:var(--text3);font-weight:400;">${cards.length} cards</span>
         </h3>
-        <div class="card-list" id="list-${s.id}">
+        <div class="card-list">
           ${cards.map((c, i) => `
             <div class="card-list-item">
               <div style="flex:1">
                 <div class="q-text">${escHtml(c.q)}</div>
                 <div class="a-text" style="margin-top:4px">${escHtml(c.a)}</div>
               </div>
-              <button class="del-btn" onclick="deleteCard('${s.id}', ${i})" aria-label="Delete card">
-                <i class="ti ti-trash" aria-hidden="true"></i>
-              </button>
-            </div>
-          `).join('')}
+              <button class="del-btn" onclick="deleteCard('${s.id}',${i})"><i class="ti ti-trash"></i></button>
+            </div>`).join('')}
         </div>
-        <div class="add-card-form" id="form-${s.id}">
-          <div class="form-row">
-            <input type="text" id="q-${s.id}" placeholder="Question…" />
-          </div>
+        <div class="add-card-form">
+          <div class="form-row"><input type="text" id="q-${s.id}" placeholder="Question…" /></div>
           <input type="text" id="a-${s.id}" placeholder="Answer…" />
-          <div>
-            <button class="btn" onclick="addCard('${s.id}')">
-              <i class="ti ti-plus" aria-hidden="true"></i> Add card
-            </button>
-          </div>
+          <div><button class="btn" onclick="addCard('${s.id}')"><i class="ti ti-plus"></i> Add card</button></div>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 }
 
 function escHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function addCard(subjectId) {
-  const q = document.getElementById('q-' + subjectId).value.trim();
-  const a = document.getElementById('a-' + subjectId).value.trim();
+function addCard(sid) {
+  const q = document.getElementById('q-' + sid).value.trim();
+  const a = document.getElementById('a-' + sid).value.trim();
   if (!q || !a) return;
-  if (!data.cards[subjectId]) data.cards[subjectId] = [];
-  const id = Date.now();
-  data.cards[subjectId].push({ q, a, id, due: true });
+  data.cards[sid].push({ q, a, id: Date.now(), due: true });
   saveData(data);
   renderManage();
 }
 
-function deleteCard(subjectId, idx) {
+function deleteCard(sid, idx) {
   if (!confirm('Delete this card?')) return;
-  data.cards[subjectId].splice(idx, 1);
+  data.cards[sid].splice(idx, 1);
   saveData(data);
   renderManage();
 }
 
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning.';
-  if (h < 18) return 'Good afternoon.';
-  return 'Good evening.';
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
-
-document.querySelector('h1').textContent = getGreeting();
-
-const streakDays = data.streak || 1;
-document.getElementById('streak-text').textContent =
-  streakDays === 1
-    ? 'Start studying to build your streak.'
-    : `You're on a ${streakDays}-day streak. Keep it up!`;
 
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (!document.getElementById('home-view').classList.contains('page-hidden')) renderHome();
   if (!document.getElementById('manage-view').classList.contains('page-hidden')) renderManage();
 });
 
-renderHome();
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+initAuth();
 </script>
 </body>
 </html>
