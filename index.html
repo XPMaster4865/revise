@@ -159,6 +159,19 @@
     .add-card-form input:focus { border-color: var(--purple); }
     .add-card-form .form-row { display: flex; gap: 8px; }
     .add-card-form .form-row input { flex: 1; }
+    .ai-btn { background: linear-gradient(135deg, var(--purple), #7c6ee0); color: #fff; border: none; border-radius: var(--radius); padding: 8px 14px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+    .ai-btn:hover { opacity: 0.88; }
+    .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ai-preview { background: var(--purple-light); border: 0.5px solid var(--border-md); border-radius: var(--radius); margin-top: 10px; overflow: hidden; }
+    .ai-preview-header { padding: 9px 12px; font-size: 12px; font-weight: 600; color: var(--purple-text); display: flex; align-items: center; gap: 6px; border-bottom: 0.5px solid var(--border); }
+    .ai-card-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
+    .ai-card-item:last-child { border-bottom: none; }
+    .ai-card-text { flex: 1; }
+    .ai-card-q { font-size: 13px; font-weight: 500; }
+    .ai-card-a { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .ai-add-btn { background: var(--purple); color: #fff; border: none; border-radius: 7px; padding: 5px 10px; font-size: 12px; font-family: inherit; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .ai-add-btn:hover { opacity: 0.85; }
+    .ai-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* ── ACCOUNT MODAL ─────────────────────────────────────────────────────── */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -868,8 +881,12 @@ function renderManage() {
       <div class="add-card-form">
         <div class="form-row"><input type="text" id="q-${s.id}" placeholder="Question…" /></div>
         <input type="text" id="a-${s.id}" placeholder="Answer…" />
-        <div><button class="btn" onclick="addCard('${s.id}')"><i class="ti ti-plus"></i> Add card</button></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn" onclick="addCard('${s.id}')"><i class="ti ti-plus"></i> Add card</button>
+          <button class="ai-btn" id="ai-btn-${s.id}" onclick="generateAICards('${s.id}')"><i class="ti ti-sparkles"></i> Generate with AI</button>
+        </div>
       </div>
+      <div id="ai-preview-${s.id}"></div>
     </div>`;
   }).join('');
 }
@@ -886,6 +903,70 @@ function deleteCard(sid,idx) {
   if(!confirm('Delete this card?')) return;
   data.cards[sid].splice(idx,1);
   saveData(data); renderManage();
+}
+
+// ══ AI GENERATION ═══════════════════════════════════════════════════════════════
+
+async function generateAICards(sid) {
+  const btn = document.getElementById('ai-btn-' + sid);
+  const preview = document.getElementById('ai-preview-' + sid);
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Generating…';
+  preview.innerHTML = '';
+
+  const subject = SUBJECTS.find(s => s.id === sid);
+  const existingQuestions = (data.cards[sid] || []).map(c => c.q);
+
+  const { cards, error } = await api.post('/ai/generate', {
+    subject: sid,
+    subjectName: subject.name,
+    masteryPercent: mastery(sid),
+    existingQuestions,
+    count: 4,
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-sparkles"></i> Generate with AI';
+
+  if (error) { showToast(error); return; }
+  if (!cards?.length) { showToast('No cards returned. Try again.'); return; }
+
+  preview.innerHTML = `
+    <div class="ai-preview">
+      <div class="ai-preview-header"><i class="ti ti-sparkles"></i> AI suggested cards — click + to add</div>
+      ${cards.map((c, i) => `
+        <div class="ai-card-item" id="ai-item-${sid}-${i}">
+          <div class="ai-card-text">
+            <div class="ai-card-q">${escHtml(c.q)}</div>
+            <div class="ai-card-a">${escHtml(c.a)}</div>
+          </div>
+          <button class="ai-add-btn" onclick="acceptAICard('${sid}',${i},${JSON.stringify(JSON.stringify(c))})">
+            <i class="ti ti-plus"></i> Add
+          </button>
+        </div>`).join('')}
+    </div>`;
+}
+
+function acceptAICard(sid, i, cardJson) {
+  const c = JSON.parse(cardJson);
+  data.cards[sid].push({ q: c.q, a: c.a, id: Date.now(), due: true });
+  saveData(data);
+  const item = document.getElementById(`ai-item-${sid}-${i}`);
+  if (item) {
+    item.style.opacity = '0.4';
+    item.querySelector('.ai-add-btn').disabled = true;
+    item.querySelector('.ai-add-btn').textContent = 'Added';
+  }
+  // Refresh card count in manage view without wiping AI previews
+  const listEl = item?.closest('.subject-section')?.querySelector('.card-list');
+  if (listEl) {
+    const cards = data.cards[sid] || [];
+    listEl.innerHTML = cards.map((c, idx) => `
+      <div class="card-list-item">
+        <div style="flex:1"><div class="q-text">${escHtml(c.q)}</div><div class="a-text" style="margin-top:4px">${escHtml(c.a)}</div></div>
+        <button class="del-btn" onclick="deleteCard('${sid}',${idx})"><i class="ti ti-trash"></i></button>
+      </div>`).join('');
+  }
 }
 
 // ══ ADMIN ═══════════════════════════════════════════════════════════════════════
