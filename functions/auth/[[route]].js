@@ -22,6 +22,8 @@ export async function onRequest(context) {
     'POST:passkey/login-finish':    () => handleLoginFinish(request, env),
     'GET:passkeys':                 () => handleListPasskeys(request, env),
     'POST:passkeys/delete':         () => handleDeletePasskey(request, env),
+    'GET:admin/users':              () => handleAdminUsers(request, env),
+    'POST:admin/set-admin':         () => handleAdminSetAdmin(request, env),
   };
 
   const handler = map[`${request.method}:${route}`];
@@ -168,14 +170,33 @@ async function handleMe(req, env) {
   if (!sess) return json({ user: null });
   const raw = await env.REVISE_KV.get(`user:id:${sess.userId}`);
   if (!raw) return json({ user: null }, 200, { 'Set-Cookie': cookieClear() });
-  const user = JSON.parse(raw);
+  let user = JSON.parse(raw);
+
+  // Auto-promote emails listed in ADMIN_EMAILS env var
+  const adminEmails = (env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  if (adminEmails.includes(user.email) && !user.isAdmin) {
+    user.isAdmin = true;
+    await env.REVISE_KV.put(`user:id:${user.id}`, JSON.stringify(user));
+    await env.REVISE_KV.put(`user:email:${user.email}`, JSON.stringify(user));
+  }
+
   const passkeys = JSON.parse(await env.REVISE_KV.get(`passkeys:${user.id}`) || '[]');
   const hasGoogle = !!(await env.REVISE_KV.get(`google:user:${user.id}`));
   return json({ user: { ...safeUser(user), hasGoogle, passkeyCount: passkeys.length } });
 }
 
 function safeUser(u) {
-  return { id: u.id, email: u.email, name: u.name, picture: u.picture };
+  return { id: u.id, email: u.email, name: u.name, picture: u.picture, isAdmin: u.isAdmin || false };
+}
+
+async function requireAdmin(req, env) {
+  const sess = await getSession(env.REVISE_KV, req);
+  if (!sess) return [null, err('Not signed in.', 401)];
+  const raw = await env.REVISE_KV.get(`user:id:${sess.userId}`);
+  if (!raw) return [null, err('Not signed in.', 401)];
+  const user = JSON.parse(raw);
+  if (!user.isAdmin) return [null, err('Forbidden.', 403)];
+  return [user, null];
 }
 
 // ── GOOGLE OAUTH ──────────────────────────────────────────────────────────────
@@ -517,5 +538,46 @@ async function handleDeletePasskey(req, env) {
   const all = JSON.parse(await env.REVISE_KV.get(`passkeys:${sess.userId}`) || '[]');
   await env.REVISE_KV.put(`passkeys:${sess.userId}`, JSON.stringify(all.filter(c => c.id !== id)));
   await env.REVISE_KV.delete(`pk:cred:${id}`);
+  return json({ ok: true });
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+
+async function handleAdminUsers(req, env) {
+  const [, forbidden] = await requireAdmin(req, env);
+  if (forbidden) return forbidden;
+
+  const { keys } = await env.REVISE_KV.list({ prefix: 'user:id:' });
+  const users = await Promise.all(keys.map(async ({ name }) => {
+    const raw = await env.REVISE_KV.get(name);
+    if (!raw) return null;
+    const u = JSON.parse(raw);
+    const passkeys  = JSON.parse(await env.REVISE_KV.get(`passkeys:${u.id}`) || '[]');
+    const hasGoogle = !!(await env.REVISE_KV.get(`google:user:${u.id}`));
+    return {
+      id: u.id, email: u.email, name: u.name, picture: u.picture,
+      isAdmin: u.isAdmin || false, createdAt: u.createdAt,
+      passkeyCount: passkeys.length, hasGoogle,
+    };
+  }));
+
+  return json({ users: users.filter(Boolean).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)) });
+}
+
+async function handleAdminSetAdmin(req, env) {
+  const [adminUser, forbidden] = await requireAdmin(req, env);
+  if (forbidden) return forbidden;
+
+  const { userId, isAdmin } = await req.json().catch(() => ({}));
+  if (!userId) return err('Missing userId.');
+  if (userId === adminUser.id) return err('Cannot change your own admin status.');
+
+  const raw = await env.REVISE_KV.get(`user:id:${userId}`);
+  if (!raw) return err('User not found.');
+  const target = JSON.parse(raw);
+  target.isAdmin = !!isAdmin;
+  await env.REVISE_KV.put(`user:id:${target.id}`, JSON.stringify(target));
+  await env.REVISE_KV.put(`user:email:${target.email}`, JSON.stringify(target));
+
   return json({ ok: true });
 }

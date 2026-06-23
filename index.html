@@ -193,10 +193,30 @@
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); border-radius: var(--radius); padding: 10px 18px; font-size: 13px; font-weight: 500; z-index: 400; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
     .toast.show { opacity: 1; }
 
+    /* ── ADMIN ─────────────────────────────────────────────────────────────── */
+    .admin-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; background: var(--amber-light); color: var(--amber); border-radius: 20px; padding: 2px 8px; }
+    .admin-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 2rem; }
+    .user-table { width: 100%; border-collapse: collapse; }
+    .user-table th { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); text-align: left; padding: 0 12px 10px; }
+    .user-table td { padding: 10px 12px; border-top: 0.5px solid var(--border); font-size: 14px; vertical-align: middle; }
+    .user-table tr:hover td { background: var(--surface2); }
+    .user-row-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--purple); color: #fff; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+    .user-row-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-email { font-weight: 500; }
+    .user-meta  { font-size: 12px; color: var(--text3); margin-top: 1px; }
+    .method-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; background: var(--surface2); border-radius: 20px; padding: 2px 7px; margin: 0 2px; color: var(--text2); }
+    .admin-search { width: 100%; background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: 10px 13px; font-size: 14px; font-family: inherit; color: var(--text); outline: none; margin-bottom: 1rem; }
+    .admin-search:focus { border-color: var(--purple); }
+    .btn-promote { background: none; border: 0.5px solid var(--border-md); border-radius: 7px; padding: 5px 11px; font-size: 12px; font-family: inherit; cursor: pointer; color: var(--text2); white-space: nowrap; }
+    .btn-promote:hover { background: var(--surface2); color: var(--text); }
+    .btn-promote.is-admin { color: var(--amber); border-color: var(--amber-light); }
+    .btn-promote.is-admin:hover { background: var(--amber-light); }
+
     @media (max-width: 600px) {
       .stats { grid-template-columns: repeat(2,1fr); }
       .subjects { grid-template-columns: repeat(2,1fr); }
       .complete-stats { gap: 1.5rem; }
+      .admin-stats { grid-template-columns: repeat(2,1fr); }
     }
     @media (max-width: 420px) { .subjects { grid-template-columns: 1fr; } }
   </style>
@@ -255,6 +275,7 @@
     <div class="nav-inner">
       <div class="logo">re<em>vise</em></div>
       <div class="nav-right">
+        <button class="btn hidden" id="admin-nav-btn" onclick="showAdmin()"><i class="ti ti-tool"></i> Maintenance</button>
         <button class="btn" onclick="showManage()"><i class="ti ti-cards"></i> Manage cards</button>
         <button class="btn btn-primary" onclick="studyAll()"><i class="ti ti-player-play"></i> Study all due</button>
         <button class="avatar-btn" id="nav-avatar" onclick="openAccount()"></button>
@@ -320,6 +341,29 @@
       <h2 style="margin:0;">Manage cards</h2>
     </div>
     <div id="manage-content"></div>
+  </div>
+
+  <div id="admin-view" class="page shell page-hidden">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.75rem;">
+      <button class="btn" onclick="goHome()"><i class="ti ti-arrow-left"></i> Back</button>
+      <h2 style="margin:0;">Maintenance</h2>
+      <span class="admin-badge"><i class="ti ti-shield-check"></i> Admin</span>
+    </div>
+    <div class="admin-stats" id="admin-stats"></div>
+    <div class="section-label">Users</div>
+    <input class="admin-search" id="admin-search" placeholder="Search by email…" oninput="filterUsers()" />
+    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">
+      <table class="user-table">
+        <thead><tr>
+          <th>User</th>
+          <th>Joined</th>
+          <th>Auth methods</th>
+          <th>Role</th>
+        </tr></thead>
+        <tbody id="admin-user-list"></tbody>
+      </table>
+    </div>
+    <p id="admin-empty" class="hidden" style="font-size:14px;color:var(--text3);padding:1rem 0;">No users found.</p>
   </div>
 </div>
 
@@ -416,6 +460,7 @@ function enterApp(user) {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
   updateNavAvatar(user);
+  document.getElementById('admin-nav-btn').classList.toggle('hidden', !user.isAdmin);
   data = loadData();
   renderHome();
 }
@@ -722,7 +767,7 @@ function renderHome() {
       }).join('');
 }
 
-function show(id) { ['home-view','fc-view','manage-view'].forEach(v => document.getElementById(v).classList.toggle('page-hidden', v!==id)); }
+function show(id) { ['home-view','fc-view','manage-view','admin-view'].forEach(v => document.getElementById(v).classList.toggle('page-hidden', v!==id)); }
 function goHome() { renderHome(); show('home-view'); }
 
 function startSubject(sid) {
@@ -841,6 +886,74 @@ function deleteCard(sid,idx) {
   if(!confirm('Delete this card?')) return;
   data.cards[sid].splice(idx,1);
   saveData(data); renderManage();
+}
+
+// ══ ADMIN ═══════════════════════════════════════════════════════════════════════
+
+let allUsers = [];
+
+async function showAdmin() {
+  if (!currentUser?.isAdmin) return;
+  show('admin-view');
+  document.getElementById('admin-user-list').innerHTML = '<tr><td colspan="4" style="color:var(--text3);font-size:13px;padding:1.5rem;">Loading…</td></tr>';
+  document.getElementById('admin-stats').innerHTML = '';
+  const { users, error } = await api.get('/auth/admin/users');
+  if (error) { showToast('Failed to load users: ' + error); return; }
+  allUsers = users || [];
+  renderAdminStats();
+  filterUsers();
+}
+
+function renderAdminStats() {
+  const total  = allUsers.length;
+  const admins = allUsers.filter(u => u.isAdmin).length;
+  const google = allUsers.filter(u => u.hasGoogle).length;
+  document.getElementById('admin-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total users</div></div>
+    <div class="stat-card"><div class="stat-val">${admins}</div><div class="stat-lbl">Admins</div></div>
+    <div class="stat-card"><div class="stat-val">${google}</div><div class="stat-lbl">Google accounts</div></div>`;
+}
+
+function filterUsers() {
+  const q = document.getElementById('admin-search').value.trim().toLowerCase();
+  const filtered = q ? allUsers.filter(u => u.email.toLowerCase().includes(q)) : allUsers;
+  document.getElementById('admin-empty').classList.toggle('hidden', filtered.length > 0);
+  document.getElementById('admin-user-list').innerHTML = filtered.map(u => {
+    const isSelf = u.id === currentUser.id;
+    const methods = [
+      u.hasGoogle    ? `<span class="method-pill"><i class="ti ti-brand-google" style="font-size:11px"></i> Google</span>` : '',
+      u.passkeyCount ? `<span class="method-pill"><i class="ti ti-fingerprint" style="font-size:11px"></i> ${u.passkeyCount}</span>` : '',
+      (!u.hasGoogle && !u.passkeyCount) ? `<span class="method-pill"><i class="ti ti-lock" style="font-size:11px"></i> Password</span>` : '',
+    ].join('');
+    const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
+    const avatar = u.picture
+      ? `<img src="${escHtml(u.picture)}" alt="">`
+      : (u.email || '?')[0].toUpperCase();
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <div class="user-row-avatar">${avatar}</div>
+        <div><div class="user-email">${escHtml(u.email)}</div>${u.name ? `<div class="user-meta">${escHtml(u.name)}</div>` : ''}</div>
+      </div></td>
+      <td style="color:var(--text3);font-size:13px;">${joined}</td>
+      <td>${methods}</td>
+      <td>${isSelf
+        ? `<span class="admin-badge"><i class="ti ti-shield-check"></i> You</span>`
+        : `<button class="btn-promote ${u.isAdmin ? 'is-admin' : ''}" onclick="toggleAdmin('${u.id}',${!u.isAdmin})">
+             ${u.isAdmin ? '<i class="ti ti-shield-off"></i> Revoke admin' : '<i class="ti ti-shield"></i> Make admin'}
+           </button>`
+      }</td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleAdmin(userId, makeAdmin) {
+  const { error } = await api.post('/auth/admin/set-admin', { userId, isAdmin: makeAdmin });
+  if (error) { showToast(error); return; }
+  const u = allUsers.find(x => x.id === userId);
+  if (u) u.isAdmin = makeAdmin;
+  renderAdminStats();
+  filterUsers();
+  showToast(makeAdmin ? 'User promoted to admin.' : 'Admin access revoked.');
 }
 
 let toastT;
