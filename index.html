@@ -616,7 +616,7 @@ async function loadPasskeys() {
 async function addPasskey() {
   if (!window.PublicKeyCredential) { showToast('Passkeys not supported in this browser.'); return; }
   try {
-    const opts = await api.get('/auth/passkey/register-begin');
+    const opts = await api.post('/auth/passkey/register-begin', {});
     if (opts.error) { showToast(opts.error); return; }
 
     const challengeStr = opts.challenge;
